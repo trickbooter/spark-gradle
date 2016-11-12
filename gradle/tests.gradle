@@ -1,25 +1,6 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
-processTestResources {
-    outputs.upToDateWhen { false }
-    doLast {
-        def r = new File("${projectDir.path}/src/test/resources")
-        def d = new File("${r}/db")
-        delete d
-        d.mkdirs()
-        copy {
-            from "${projectDir.path}/src/db"
-            into "${d}"
-        }
-        def f = new File("${d}/cql.manifest")
-        def content = ""
-        FileTree tree = fileTree("${r}") { include('db/*.up.cql') }
-        tree.collect().sort().each { content += (it.absolutePath - r.absolutePath) + '\n' }
-        f.write content
-    }
-}
-
 test {
     maxParallelForks = 1
 }
@@ -54,17 +35,4 @@ tasks.withType(Test) {
             }
         }
     }
-}
-
-
-task scalaTest(dependsOn: testClasses, type: JavaExec, group: 'verification') {
-    main = 'org.scalatest.tools.Runner'
-    classpath = sourceSets.test.runtimeClasspath
-    args = ['-R', 'build/classes/test', '-o', '-l', 'integration']
-}
-
-task scalaIntTest(dependsOn: testClasses, type: JavaExec, group: 'verification') {
-    main = 'org.scalatest.tools.Runner'
-    classpath = sourceSets.test.runtimeClasspath
-    args = ['-R', 'build/classes/test', '-o']
 }
