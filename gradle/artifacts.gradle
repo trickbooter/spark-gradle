@@ -1,0 +1,41 @@
+shadowJar {
+    classifier "hadoop"
+    // Hadoop uses Guava 14.x. We need to relocate Guava in order to let spark-cassandra use 16.x Guava
+    relocate 'com.google', 'shadow.com.google'
+    mergeServiceFiles()
+}
+
+jar {
+    manifest {
+        attributes(
+                "Implementation-Title": "Spark-Gradle",
+                "Implementation-Descritpion": "A Spark- Cassandra template project built using Gradle",
+                "Implementation-Version": getCheckedOutGitCommitHash(),
+                "Build-Timestamp": (int) (new Date().getTime() / 1000)
+        )
+    }
+}
+
+task distribution(type: Tar, dependsOn: shadowJar){
+    from shadowJar.outputs.files
+    from('src/conf') { into('conf') }
+    from('src/db') { into('db') }
+    from('src/lri_scripts') { into('lri_scripts') }
+    from('src/airflow_dags') { into('airflow_dags') }
+}
+
+def getCheckedOutGitCommitHash() {
+    def gitFolder = "$projectDir/.git/"
+    /*
+     * '.git/HEAD' contains either
+     *      in case of detached head: the currently checked out commit hash
+     *      otherwise: a reference to a file containing the current commit hash
+     */
+    def head = new File(gitFolder + "HEAD").text.split(":") // .git/HEAD
+    def isCommit = head.length == 1 // e5a7c79edabbf7dd39888442df081b1c9d8e88fd
+
+    if (isCommit) return head[0].trim()
+
+    def refHead = new File(gitFolder + head[1].trim()) // .git/refs/heads/master
+    refHead.text.trim()
+}

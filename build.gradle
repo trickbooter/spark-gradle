@@ -1,0 +1,46 @@
+buildscript { apply from: file('gradle/buildscript.gradle'), to: buildscript }
+
+plugins {
+    id 'groovy'
+    id 'java'
+    id 'scala'
+    id 'idea'
+    id 'eclipse'
+    id 'com.github.johnrengelman.shadow' version '1.2.3'
+}
+
+apply from: "$rootDir/gradle/dependencies.gradle"
+apply from: "$rootDir/gradle/artifacts.gradle"
+apply from: "$rootDir/gradle/tests.gradle"
+
+group 'susi'
+version '1.0-SNAPSHOT'
+
+task checkJavaVersion << {
+    if (!JavaVersion.current().java7Compatible) {
+        def msg = '''Oops:
+                  |  This needs Java 7,
+                  |  You are using something else,
+                  |  Refresh. Try again.'''.stripMargin()
+        throw new GradleException(msg)
+    }
+}
+
+task runSpark(dependsOn: 'shadowJar', type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    maxHeapSize = "2048m"
+
+    // Set main class
+    if (project.hasProperty('sparkMain')) {
+        main = sparkMain
+    }
+    // Set args
+    if (project.hasProperty('sparkArgs')) {
+        args Eval.me(sparkArgs)
+    }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.14'
+    distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
+}

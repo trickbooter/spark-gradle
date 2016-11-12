@@ -1,0 +1,4 @@
+// prep the build dependencies
+repositories {
+    jcenter() // for shadow plugin
+}
