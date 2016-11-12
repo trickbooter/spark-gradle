@@ -1,10 +1,20 @@
+/**
+ * Build the shadowjar by merging all upstream compile deps
+ * Shows the com.google namespace to avoid a conflict with the
+ * Spark-Cassandra connector if in use.
+ * Merge service files to capture any JDBC driver files
+ */
 shadowJar {
-    classifier "hadoop"
+    classifier "shadow"
     // Hadoop uses Guava 14.x. We need to relocate Guava in order to let spark-cassandra use 16.x Guava
     relocate 'com.google', 'shadow.com.google'
     mergeServiceFiles()
 }
 
+/**
+ * Rewrite the jar manifest
+ * including the git commit hash code
+ */
 jar {
     manifest {
         attributes(
@@ -16,10 +26,19 @@ jar {
     }
 }
 
+/**
+ * Build a tar file that includes the jar and anything else you want to package
+ * */
 task distribution(type: Tar, dependsOn: shadowJar){
     from shadowJar.outputs.files
+    from('src/conf') { into('conf') }
 }
 
+/**
+ * Read the git commit from the repo.
+ * You'll need to have an initial git commit for this code to work
+ * @return
+ */
 def getCheckedOutGitCommitHash() {
     def gitFolder = "$projectDir/.git/"
     /*

@@ -13,13 +13,13 @@ apply from: "$rootDir/gradle/dependencies.gradle"
 apply from: "$rootDir/gradle/artifacts.gradle"
 apply from: "$rootDir/gradle/tests.gradle"
 
-group 'susi'
+group 'spark-gradle'
 version '1.0-SNAPSHOT'
 
 task checkJavaVersion << {
-    if (!JavaVersion.current().java7Compatible) {
+    if (!JavaVersion.current().java8Compatible) {
         def msg = '''Oops:
-                  |  This needs Java 7,
+                  |  This needs Java 8,
                   |  You are using something else,
                   |  Refresh. Try again.'''.stripMargin()
         throw new GradleException(msg)

@@ -5,6 +5,11 @@ test {
     maxParallelForks = 1
 }
 
+/**
+ * Use JUnit to run tests, but make sure that we send
+ * output to Gradle's output window
+ * Attribute your scala tests with @RunWith(classOf[JUnitRunner])
+ */
 tasks.withType(Test) {
     testLogging {
         events TestLogEvent.FAILED,
