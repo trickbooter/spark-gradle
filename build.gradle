@@ -1,21 +1,27 @@
 buildscript { apply from: file('gradle/buildscript.gradle'), to: buildscript }
 
 plugins {
-    id 'groovy'
-    id 'java'
-    id 'scala'
-    id 'idea'
-    id 'eclipse'
-    id 'com.github.johnrengelman.shadow' version '1.2.3'
+    id 'groovy' // for groovy support in Gradle
+    id 'java' // for Java build support
+    id 'scala' // for Scala build support
+    id 'idea' // for IntelliJ project creation (optional)
+    id 'eclipse' // for Eclipse project creation (optional)
+    id 'com.github.johnrengelman.shadow' version '1.2.3' // to build an uber jar
 }
 
+// import dependencies
 apply from: "$rootDir/gradle/dependencies.gradle"
+// import artifact building tasks
 apply from: "$rootDir/gradle/artifacts.gradle"
+// import test tasks
 apply from: "$rootDir/gradle/tests.gradle"
 
+// define the group and version for the Jar
+// also see settings.gradle for the artifact name
 group 'spark-gradle'
 version '1.0-SNAPSHOT'
 
+// ensures we have Java8
 task checkJavaVersion << {
     if (!JavaVersion.current().java8Compatible) {
         def msg = '''Oops:
@@ -26,6 +32,7 @@ task checkJavaVersion << {
     }
 }
 
+// Allows us to run Spark with command line args
 task runSpark(dependsOn: 'shadowJar', type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     maxHeapSize = "2048m"
@@ -40,6 +47,9 @@ task runSpark(dependsOn: 'shadowJar', type: JavaExec) {
     }
 }
 
+/**
+ * Allows us to use the gradle wrapper, which is vital in continuous integration
+ */
 task wrapper(type: Wrapper) {
     gradleVersion = '2.14'
     distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
