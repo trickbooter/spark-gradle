@@ -18,23 +18,23 @@
 package com.trickbooter
 
 import scala.math.random
-
-import org.apache.spark._
+import org.apache.spark.sql.SparkSession
 
 /** Computes an approximation to pi */
 object SparkPi {
   def main(args: Array[String]) {
-    val conf = new SparkConf().setAppName("Spark Pi")
-    val sc = new SparkContext(conf)
+    val ss = SparkSession.builder()
+      .appName("Spark PI")
+      .getOrCreate()
     val slices = if (args.length > 0) args(0).toInt else 2
-    val pi = computePi(sc, slices)
+    val pi = computePi(ss, slices)
     println("Pi is roughly " + pi)
-    sc.stop()
+    ss.stop()
   }
 
-  def computePi(sc: SparkContext, slices: Int) = {
+  def computePi(ss: SparkSession, slices: Int) = {
     val n = math.min(100000L * slices, Int.MaxValue).toInt // avoid overflow
-    val count = sc.parallelize(1 until n, slices).map { i =>
+    val count = ss.sparkContext.parallelize(1 until n, slices).map { i =>
       val x = random * 2 - 1
       val y = random * 2 - 1
       if (x * x + y * y < 1) 1 else 0

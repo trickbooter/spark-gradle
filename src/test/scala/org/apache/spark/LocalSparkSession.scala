@@ -18,21 +18,17 @@
 package org.apache.spark
 
 import _root_.io.netty.util.internal.logging.{InternalLoggerFactory, Slf4JLoggerFactory}
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.SparkSession
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.Suite
 
 /** Manages a local `sc` {@link SparkContext} variable, correctly stopping it after each test. */
-trait LocalSparkContext extends BeforeAndAfterEach with BeforeAndAfterAll {
+trait LocalSparkSession extends BeforeAndAfterEach with BeforeAndAfterAll {
   self: Suite =>
 
-
-  @transient private var _sc: SparkContext = _
-  @transient private var _sqlc: SQLContext = _
-
-  @transient var sc: SparkContext = _
-  @transient var sqlc: SQLContext = _
+  @transient private var _ss: SparkSession = _
+  @transient var ss: SparkSession = _
 
   override def beforeAll() {
     super.beforeAll()
@@ -48,44 +44,42 @@ trait LocalSparkContext extends BeforeAndAfterEach with BeforeAndAfterAll {
   }
 
   def resetSparkContext(): Unit = {
-    LocalSparkContext.stop(sc)
-    sc = null
+    LocalSparkSession.stop(ss)
+    ss = null
   }
 
 }
 
-object LocalSparkContext {
-  def stop(sc: SparkContext) {
-    if (sc != null) {
-      sc.stop()
+object LocalSparkSession {
+  def stop(ss: SparkSession) {
+    if (ss != null) {
+      ss.stop()
     }
     // To avoid RPC rebinding to the same port, since it doesn't unbind immediately on shutdown
     System.clearProperty("spark.driver.port")
   }
 
-  /** Runs `f` by passing in `sc` and ensures that `sc` is stopped. */
-  def withSpark[T](sc: SparkContext)(f: SparkContext => T): T = {
+  /** Runs `f` by passing in `ss` and ensures that `ss` is stopped. */
+  def withSpark[T](ss: SparkSession)(f: SparkSession => T): T = {
     try {
-      f(sc)
+      f(ss)
     } finally {
-      stop(sc)
+      stop(ss)
     }
   }
-
 }
 
-/** Manages a local `sc` {@link SparkContext} variable, creating it before each test and correctly stopping it after each test. */
-trait ProvidedLocalSparkContext extends LocalSparkContext {
+/** Manages a local `ss` {@link SparkSession} variable, creating it before each test and correctly stopping it after each test. */
+trait ProvidedLocalSparkSession extends LocalSparkSession {
   self: Suite =>
 
   private val master = "local[2]"
   private val appName = "test"
 
   override def beforeEach() {
-    val conf = new SparkConf()
-      .setMaster(master)
-      .setAppName(appName)
-    sc = new SparkContext(conf)
-    sqlc = new SQLContext(sc)
+    ss = SparkSession.builder()
+      .appName(appName)
+      .master(master)
+      .getOrCreate()
   }
 }
